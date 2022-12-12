@@ -7,7 +7,7 @@ import static com.codeborne.selenide.Condition.hidden;
 import static com.codeborne.selenide.Condition.visible;
 import static com.codeborne.selenide.Selenide.$x;
 
-public class TransactionPage {
+public class TransferPage {
     private SelenideElement amountInput = $x("//span[@data-test-id='amount']//input");
     private SelenideElement fromInput = $x("//span[@data-test-id='from']//input");
     private SelenideElement toInput = $x("//span[@data-test-id='to']//input");
@@ -16,7 +16,7 @@ public class TransactionPage {
     private SelenideElement errorNotification = $x("//div[@data-test-id='error-notification']");
     private SelenideElement errorButton = $x("//div[@data-test-id='error-notification']/button");
 
-    public TransactionPage() {
+    public TransferPage() {
         amountInput.should(visible);
         fromInput.should(visible);
         toInput.should(visible);

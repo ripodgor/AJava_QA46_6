@@ -24,9 +24,9 @@ public class DashboardPage {
         return parseInt(card[6]);
     }
 
-    public TransactionPage transferClick(int indexCardTo) {
+    public TransferPage transferClick(int indexCardTo) {
         actionButtons.get(indexCardTo).click();
-        return new TransactionPage();
+        return new TransferPage();
     }
 
     public void reloadBalance() {
