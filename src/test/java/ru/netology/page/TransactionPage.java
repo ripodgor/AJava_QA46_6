@@ -1,47 +1,50 @@
 package ru.netology.page;
 
+import com.codeborne.selenide.Condition;
 import com.codeborne.selenide.SelenideElement;
 
-import static com.codeborne.selenide.Condition.text;
+import static com.codeborne.selenide.Condition.hidden;
 import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selenide.$;
+import static com.codeborne.selenide.Selenide.$x;
 
 public class TransactionPage {
-    private SelenideElement heading = $("h1").shouldHave(text("Пополнение карты"));
-    private SelenideElement amountField = $("[data-test-id='amount'] input");
-    private SelenideElement fromField = $("[data-test-id='from'] input");
-    private SelenideElement toField = $("[data-test-id='to'] input");
-    private SelenideElement transferButton = $("[data-test-id='action-transfer']");
-    private SelenideElement cancelButton = $("[data-test-id='action-cancel']");
-    private SelenideElement errorNotification = $("[data-test-id='error-notification'] .notification__content");
+    private SelenideElement amountInput = $x("//span[@data-test-id='amount']//input");
+    private SelenideElement fromInput = $x("//span[@data-test-id='from']//input");
+    private SelenideElement toInput = $x("//span[@data-test-id='to']//input");
+    private SelenideElement transferButton = $x("//button[@data-test-id='action-transfer']");
+    private SelenideElement cancelButton = $x("//button[@data-test-id='action-cancel']");
+    private SelenideElement errorNotification = $x("//div[@data-test-id='error-notification']");
+    private SelenideElement errorButton = $x("//div[@data-test-id='error-notification']/button");
 
     public TransactionPage() {
-        heading.shouldBe(visible);
+        amountInput.should(visible);
+        fromInput.should(visible);
+        toInput.should(visible);
+        transferButton.should(visible);
+        cancelButton.should(visible);
+        errorNotification.should(hidden);
+        errorButton.should(hidden);
     }
 
-    public DashboardPage validTransfer(String amount, String from) {
-        amountField.val(amount);
-        fromField.val(from);
+    public void transfer(String amount, String cardFrom) {
+        amountInput.val(amount);
+        fromInput.val(cardFrom);
         transferButton.click();
-        return new DashboardPage();
     }
 
-    public TransactionPage invalidTransfer(String amount, String from) {
-        amountField.val(amount);
-        fromField.val(from);
-        transferButton.click();
-        errorNotification.shouldHave(text("Произошла ошибка"));
-        return new TransactionPage();
-    }
-
-    public DashboardPage cancelTransaction(String amount, String from) {
-        amountField.val(amount);
-        fromField.val(from);
+    public void cancelTransfer(String amount, String cardFrom) {
+        amountInput.val(amount);
+        fromInput.val(cardFrom);
         cancelButton.click();
-        return new DashboardPage();
     }
 
-    public SelenideElement getToField() {
-        return toField;
+    public DashboardPage checkNotification(Condition status) {
+        errorNotification.should(status);
+        if (status.equals(visible)) {
+            errorButton.click();
+            errorNotification.should(hidden);
+            cancelButton.click();
+        }
+        return new DashboardPage();
     }
 }

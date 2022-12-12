@@ -2,45 +2,34 @@ package ru.netology.page;
 
 import com.codeborne.selenide.ElementsCollection;
 import com.codeborne.selenide.SelenideElement;
-import lombok.val;
 
-import static com.codeborne.selenide.Condition.attribute;
 import static com.codeborne.selenide.Condition.visible;
-import static com.codeborne.selenide.Selenide.$;
-import static com.codeborne.selenide.Selenide.$$;
+import static com.codeborne.selenide.Selenide.$$x;
+import static com.codeborne.selenide.Selenide.$x;
+import static java.lang.Integer.parseInt;
 
 public class DashboardPage {
-    private SelenideElement heading = $("[data-test-id=dashboard]");
-    private SelenideElement firstCardDepositButton = $("[data-test-id='92df3f1c-a033-48e6-8390-206f6b1f56c0'] button");
-    private SelenideElement secondCardDepositButton = $("[data-test-id='0f3f5c2a-249e-4c3d-8287-09f7a039391d'] button");
-    private ElementsCollection cards = $$(".list__item div");
-    private final String balanceStart = "баланс: ";
-    private final String balanceFinish = " р.";
+    private ElementsCollection cards = $$x("//li[@class='list__item']/div");
+    private ElementsCollection actionButtons = $$x("//button[@data-test-id='action-deposit']");
+    private SelenideElement reloadButton = $x("//button[@data-test-id='action-reload']");
+    private SelenideElement errorNotification = $x("//div[@data-test-id='error-notification']");
 
     public DashboardPage() {
-        heading.shouldBe(visible);
+        reloadButton.should(visible);
     }
 
-    public TransactionPage firstDepositButtonClick() {
-        firstCardDepositButton.click();
+    public int getBalance(int indexCard) {
+        reloadButton.click();
+        String[] card = cards.get(indexCard).toString().split(" ");
+        return parseInt(card[6]);
+    }
+
+    public TransactionPage transferClick(int indexCardTo) {
+        actionButtons.get(indexCardTo).click();
         return new TransactionPage();
     }
 
-    public TransactionPage secondDepositButtonClick() {
-        secondCardDepositButton.click();
-        return new TransactionPage();
-    }
-
-    public int getCardBalance(String id) {
-        // перебрать все карты и найти по атрибуту data-test-id
-        val text = cards.findBy(attribute("data-test-id", id)).text();
-        return extractBalance(text);
-    }
-
-    private int extractBalance(String text) {
-        val start = text.indexOf(balanceStart);
-        val finish = text.indexOf(balanceFinish);
-        val value = text.substring(start + balanceStart.length(), finish);
-        return Integer.parseInt(value);
+    public void reloadBalance() {
+        reloadButton.click();
     }
 }
