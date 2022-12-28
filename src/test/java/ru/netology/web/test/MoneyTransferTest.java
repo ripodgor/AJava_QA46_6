@@ -1,203 +1,58 @@
 package ru.netology.web.test;
 
-import lombok.val;
 import org.junit.jupiter.api.Test;
 import ru.netology.web.data.DataHelper;
-import ru.netology.web.page.CardChoosePage;
 import ru.netology.web.page.LoginPage;
-import ru.netology.web.page.TransferPage;
 
 import static com.codeborne.selenide.Selenide.open;
 import static org.junit.jupiter.api.Assertions.assertEquals;
-import static ru.netology.web.page.CardChoosePage.getTansferAmount;
-import static ru.netology.web.page.CardChoosePage.getTansferAmountWhenDouble;
+import static ru.netology.web.data.DataHelper.*;
 
-class MoneyTransferTest {
+
+public class MoneyTransferTest {
 
 
     @Test
-    void shouldTransferMoneyToFirstCard() {
-        open("http://localhost:9999");
-        var loginPage = new LoginPage();
+    void shouldTransferFromFirstToSecond() {
+        var loginPage = open("http://localhost:9999", LoginPage.class);
         var authInfo = DataHelper.getAuthInfo();
         var verificationPage = loginPage.validLogin(authInfo);
-        var verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
-
-        val transferPage = new TransferPage();
-        String secondCardNumber = CardChoosePage.getSecondCardNumber();
-
-        String amount = getTansferAmount(secondCardNumber);
-        val cardInfo = DataHelper.secondCardInfo();
-        CardChoosePage.chooseFirstCardForTransfer();
-        transferPage.putTransferAmount(amount);
-        transferPage.putMoneyCard(cardInfo);
+        var verificationCode = DataHelper.getVerificationCode();
+        var dashboardPage = verificationPage.validVerify(verificationCode);
+        var firstCardInfo = getFirstCardInfo();
+        var secondCardInfo = getSecondCardInfo();
+        var firstCardBalance = dashboardPage.getCardBalance(firstCardInfo);
+        var secondCardBalance = dashboardPage.getCardBalance(secondCardInfo);
+        var amount = generateValidAmount(firstCardBalance);
+        var expectedBalanceFirstCard = firstCardBalance - amount;
+        var expectedBalanceSecondCard = secondCardBalance + amount;
+        var transferPage = dashboardPage.selectCardToTransfer(secondCardInfo);
+        dashboardPage = transferPage.makeValidTransfer(String.valueOf(amount), firstCardInfo);
+        var actualBalanceFirstCard = dashboardPage.getCardBalance(firstCardInfo);
+        var actualBalanceSecondCard = dashboardPage.getCardBalance(secondCardInfo);
+        assertEquals(expectedBalanceFirstCard, actualBalanceFirstCard);
+        assertEquals(expectedBalanceSecondCard, actualBalanceSecondCard);
     }
 
     @Test
-    void shouldTransferMoneyToSecondCard() {
-        open("http://localhost:9999");
-        var loginPage = new LoginPage();
+    void shouldGetErrorMessageIfAmountMoreBalance() {
+        var loginPage = open("http://localhost:9999", LoginPage.class);
         var authInfo = DataHelper.getAuthInfo();
         var verificationPage = loginPage.validLogin(authInfo);
-        var verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
+        var verificationCode = DataHelper.getVerificationCode();
+        var dashboardPage = verificationPage.validVerify(verificationCode);
+        var firstCardInfo = getFirstCardInfo();
+        var secondCardInfo = getSecondCardInfo();
+        var firstCardBalance = dashboardPage.getCardBalance(firstCardInfo);
+        var secondCardBalance = dashboardPage.getCardBalance(secondCardInfo);
+        var amount = generateInvalidAmount(secondCardBalance);
+        var transferPage = dashboardPage.selectCardToTransfer(firstCardInfo);
+        transferPage.makeTransfer(String.valueOf(amount), secondCardInfo);
+        transferPage.findErrorMessage("Выполнена попытка перевода суммы, превышающей остаток на карте списания");
+        var actualBalanceFirstCard = dashboardPage.getCardBalance(firstCardInfo);
+        var actualBalanceSecondCard = dashboardPage.getCardBalance(secondCardInfo);
+        assertEquals(firstCardBalance, actualBalanceFirstCard);
+        assertEquals(secondCardBalance, actualBalanceSecondCard);
 
-        val transferPage = new TransferPage();
-        String firstCardNumber = CardChoosePage.getFirstCardNumber();
-
-        String amount = getTansferAmount(firstCardNumber);
-        val cardInfo = DataHelper.firstCardInfo();
-        CardChoosePage.chooseSecondCardForTransfer();
-        transferPage.putTransferAmount(amount);
-        transferPage.putMoneyCard(cardInfo);
-    }
-
-    @Test
-    void checkFirstCardBalance() {
-        open("http://localhost:9999");
-        var loginPage = new LoginPage();
-        val authInfo = DataHelper.getAuthInfo();
-        val verificationPage = loginPage.validLogin(authInfo);
-        val verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
-
-        val transferPage = new TransferPage();
-        String secondCardNumber = CardChoosePage.getSecondCardNumber();
-        String amount = getTansferAmount(secondCardNumber);
-        val cardInfo = DataHelper.secondCardInfo();
-
-        String firstCardNumberBeforeTransfer = CardChoosePage.getFirstCardNumber();
-        int expected = (CardChoosePage.getCardBalance(firstCardNumberBeforeTransfer)
-                + Integer.parseInt(amount));
-
-        CardChoosePage.chooseFirstCardForTransfer();
-        transferPage.putTransferAmount(amount);
-        transferPage.putMoneyCard(cardInfo);
-
-        String firstCardNumberAfterTransfer = CardChoosePage.getFirstCardNumber();
-        int actual = CardChoosePage.getCardBalance(firstCardNumberAfterTransfer);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    void checkSecondCardBalance() {
-        open("http://localhost:9999");
-        var loginPage = new LoginPage();
-        val authInfo = DataHelper.getAuthInfo();
-        val verificationPage = loginPage.validLogin(authInfo);
-        val verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
-
-        val transferPage = new TransferPage();
-        val cardNumber = new CardChoosePage();
-        String firstCardNumber = CardChoosePage.getFirstCardNumber();
-
-        String amount = getTansferAmount(firstCardNumber);
-        val cardInfo = DataHelper.firstCardInfo();
-        String secondCardNumberBeforeTransfer = CardChoosePage.getSecondCardNumber();
-
-        int expected = (CardChoosePage.getCardBalance(secondCardNumberBeforeTransfer)
-                + Integer.parseInt(amount));
-        CardChoosePage.chooseSecondCardForTransfer();
-
-        transferPage.putTransferAmount(amount);
-        transferPage.putMoneyCard(cardInfo);
-        String secondCardNumberAfterTransfer = CardChoosePage.getSecondCardNumber();
-        int actual = CardChoosePage.getCardBalance(secondCardNumberAfterTransfer);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    void shouldTransferMoneyToFirstCardIfAmountDouble() {
-        open("http://localhost:9999");
-        var loginPage = new LoginPage();
-        val authInfo = DataHelper.getAuthInfo();
-        val verificationPage = loginPage.validLogin(authInfo);
-        val verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
-
-        val transferPage = new TransferPage();
-        String secondCardNumber = CardChoosePage.getSecondCardNumber();
-        String amount = getTansferAmountWhenDouble(secondCardNumber);
-
-        val cardInfo = DataHelper.secondCardInfo();
-        CardChoosePage.chooseFirstCardForTransfer();
-        transferPage.putTransferAmount(amount);
-        transferPage.putMoneyCard(cardInfo);
-    }
-
-    @Test
-    void shouldTransferMoneyToSecondCardIfAmountDouble() {
-        open("http://localhost:9999");
-        var loginPage = new LoginPage();
-        val authInfo = DataHelper.getAuthInfo();
-        val verificationPage = loginPage.validLogin(authInfo);
-        val verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
-
-        val transferPage = new TransferPage();
-        String firstCardNumber = CardChoosePage.getFirstCardNumber();
-        String amount = getTansferAmountWhenDouble(firstCardNumber);
-
-        val cardInfo = DataHelper.firstCardInfo();
-        CardChoosePage.chooseSecondCardForTransfer();
-        transferPage.putTransferAmount(amount);
-        transferPage.putMoneyCard(cardInfo);
-    }
-
-    @Test
-    void checkFirstCardBalanceIfAmountDouble() {
-        open("http://localhost:9999");
-        var loginPage = new LoginPage();
-        val authInfo = DataHelper.getAuthInfo();
-        val verificationPage = loginPage.validLogin(authInfo);
-        val verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
-
-        val transferPage = new TransferPage();
-        String secondCardNumber = CardChoosePage.getSecondCardNumber();
-
-        String amount = getTansferAmountWhenDouble(secondCardNumber);
-        val cardInfo = DataHelper.secondCardInfo();
-        String firstCardNumberBeforeTransfer = CardChoosePage.getFirstCardNumber();
-
-        double expected = (CardChoosePage.getCardBalance(firstCardNumberBeforeTransfer)
-                + Double.parseDouble(amount));
-        CardChoosePage.chooseFirstCardForTransfer();
-
-        transferPage.putTransferAmount(amount);
-        transferPage.putMoneyCard(cardInfo);
-
-        String firstCardNumberAfterTransfer = CardChoosePage.getFirstCardNumber();
-        double actual = CardChoosePage.getCardBalance(firstCardNumberAfterTransfer);
-        assertEquals(expected, actual);
-    }
-
-    @Test
-    void checkSecondCardBalanceIfAmountDouble() {
-        open("http://localhost:9999");
-        var loginPage = new LoginPage();
-        val authInfo = DataHelper.getAuthInfo();
-        val verificationPage = loginPage.validLogin(authInfo);
-        val verificationCode = DataHelper.getVerificationCodeFor(authInfo);
-        verificationPage.validVerify(verificationCode);
-
-        val transferPage = new TransferPage();
-        String firstCardNumber = CardChoosePage.getFirstCardNumber();
-
-        String amount = getTansferAmountWhenDouble(firstCardNumber);
-        val cardInfo = DataHelper.firstCardInfo();
-        String secondCardNumberBeforeTransfer = CardChoosePage.getSecondCardNumber();
-
-        double expected = (CardChoosePage.getCardBalance(secondCardNumberBeforeTransfer)
-                + Double.parseDouble(amount));
-        CardChoosePage.chooseSecondCardForTransfer();
-
-        transferPage.putTransferAmount(amount);
-        transferPage.putMoneyCard(cardInfo);
-        String secondCardNumberAfterTransfer = CardChoosePage.getSecondCardNumber();
-        double actual = CardChoosePage.getCardBalance(secondCardNumberAfterTransfer);
-        assertEquals(expected, actual);
     }
 }
