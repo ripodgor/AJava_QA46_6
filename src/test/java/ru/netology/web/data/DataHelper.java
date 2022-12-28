@@ -43,7 +43,7 @@ public class DataHelper {
 
     @Value
     public static class AuthInfo {
-        String Login;
+        String login;
         String password;
     }
 
